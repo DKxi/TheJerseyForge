@@ -10,6 +10,10 @@ if "page" not in st.session_state:
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
+# NEW: track if terms were accepted this session
+if "terms_accepted" not in st.session_state:
+    st.session_state.terms_accepted = False
+
 # ---------- NAVIGATION FUNCTIONS ----------
 def go_to_terms():
     st.session_state.page = "terms"
@@ -147,7 +151,12 @@ if st.session_state.page == "home":
         unsafe_allow_html=True,
     )
 
-    st.button("🛒 Cart", on_click=go_to_terms)
+    # Cart button: show terms only once per session
+    if st.button("🛒 Cart"):
+        if st.session_state.terms_accepted:
+            st.session_state.page = "cart"
+        else:
+            st.session_state.page = "terms"
 
     search_query = st.text_input("", placeholder="Search Here", label_visibility="collapsed")
     st.write("🔍 Use the search bar above to filter jerseys by any word in the name.")
@@ -234,7 +243,11 @@ elif st.session_state.page == "terms":
     By continuing, you agree to all terms above.
     """)
 
-    st.button("I Agree — Go to Cart", on_click=go_to_cart)
+    # Accept terms once, then go to cart
+    if st.button("I Agree — Go to Cart"):
+        st.session_state.terms_accepted = True
+        st.session_state.page = "cart"
+
     st.button("Back to Store", on_click=go_home)
 
 # ============================================================
