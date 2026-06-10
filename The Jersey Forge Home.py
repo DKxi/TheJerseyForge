@@ -1,5 +1,25 @@
 import streamlit as st
 import time
+import smtplib
+from email.mime.text import MIMEText
+
+def send_order_email(order_number, items):
+    sender = "mail2divij@gmail.com"
+    receiver = "mail2divij@gmail.com"
+    password = "ualo rcqp ydgq tvcp"  # Replace with your Gmail App Password
+
+    body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
+    for item, qty in items.items():
+        body += f"- {item} x{qty}\n"
+
+    msg = MIMEText(body)
+    msg["Subject"] = f"New Jersey Forge Order #{order_number}"
+    msg["From"] = sender
+    msg["To"] = receiver
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(sender, password)
+        server.sendmail(sender, receiver, msg.as_string())
 
 st.set_page_config(page_title="The Jersey Forge", layout="wide")
 
@@ -366,6 +386,7 @@ elif st.session_state.page == "cart":
 
         # Generate order number
         import random
+
         order_number = random.randint(100000, 999999)
 
         # Save order
@@ -373,6 +394,9 @@ elif st.session_state.page == "cart":
             "order_number": order_number,
             "items": st.session_state.cart.copy()
         })
+
+        # Send email notification
+        send_order_email(order_number, st.session_state.cart.copy())
 
         # Save order permanently to a file
         with open("orders.txt", "a") as f:
@@ -385,3 +409,4 @@ elif st.session_state.page == "cart":
 
         # Clear cart
         st.session_state.cart = {}
+
