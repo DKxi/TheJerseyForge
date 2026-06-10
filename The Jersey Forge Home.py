@@ -10,7 +10,7 @@ if "page" not in st.session_state:
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
-# NEW: track if terms were accepted this session
+# Track if terms were accepted this session
 if "terms_accepted" not in st.session_state:
     st.session_state.terms_accepted = False
 
@@ -192,14 +192,11 @@ if st.session_state.page == "home":
 
                 cols_btn = st.columns(2)
 
-                # ADD TO CART BUTTON (NO FLICKER)
+                # ADD TO CART BUTTON
                 with cols_btn[0]:
                     if st.button("Add to Cart", key=add_key):
                         st.session_state.cart[p["name"]] = st.session_state.cart.get(p["name"], 0) + 1
-
-                        # Trigger fade-out message
                         st.session_state[f"added_{p['name']}"] = True
-
                         st.rerun()
 
                 # REMOVE BUTTON
@@ -228,19 +225,31 @@ elif st.session_state.page == "terms":
     st.write("""
     ### 1. Independent, Customized Products
     All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products. 
-    They are **not** official merchandise and have **no affiliation** with the NBA or any team.
+    They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.
 
     ### 2. No Association with Original Brands
-    These jerseys are artistic interpretations and **not replicas** of official products.
+    These jerseys are artistic interpretations and **not replicas** of official products. 
+    Any references to player names, numbers, or teams are purely for descriptive purposes and do not imply endorsement or association.
 
-    ### 3. Waiver of Claims
-    Customers agree they **cannot take legal action** against The Jersey Forge.
+    ### 3. Custom, Fan-Made Items
+    Each jersey is a **custom, fan-made item** created from independently sourced materials. 
+    Designs, colors, and styles are inspired by basketball culture but are not official team merchandise.
 
-    ### 4. All Sales Final
-    No returns. No refunds. All sales are final.
+    ### 4. Waiver of Claims
+    By purchasing from **The Jersey Forge**, you agree that you **cannot take legal action** against The Jersey Forge, its owners, or its creators 
+    for any claims related to branding, likeness, or unofficial status of the products.
 
-    ### 5. Acceptance
-    By continuing, you agree to all terms above.
+    ### 5. No Returns or Refunds
+    All sales are **final**. Due to the custom nature of each jersey, we do **not** offer returns, exchanges, or refunds, 
+    except in rare cases of significant manufacturing defects, which are evaluated on a case-by-case basis.
+
+    ### 6. Care and Usage
+    Jerseys should be washed gently and air-dried to preserve print and fabric quality. 
+    The Jersey Forge is not responsible for damage caused by improper care, misuse, or alterations made after purchase.
+
+    ### 7. Acceptance of Terms
+    By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed** 
+    to all of the terms and conditions listed above.
     """)
 
     # Accept terms once, then go to cart
