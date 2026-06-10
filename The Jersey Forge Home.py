@@ -151,12 +151,15 @@ if st.session_state.page == "home":
         unsafe_allow_html=True,
     )
 
-    # Cart button: show terms only once per session
-    if st.button("🛒 Cart"):
-        if st.session_state.terms_accepted:
-            st.session_state.page = "cart"
-        else:
-            st.session_state.page = "terms"
+    # Cart button moved to the right side
+    cart_col_left, cart_col_right = st.columns([8, 1])
+
+    with cart_col_right:
+        if st.button("🛒 Cart"):
+            if st.session_state.terms_accepted:
+                st.session_state.page = "cart"
+            else:
+                st.session_state.page = "terms"
 
     search_query = st.text_input("", placeholder="Search Here", label_visibility="collapsed")
     st.write("🔍 Use the search bar above to filter jerseys by any word in the name.")
@@ -177,7 +180,6 @@ if st.session_state.page == "home":
         with col:
             st.markdown('<div class="product-box">', unsafe_allow_html=True)
 
-            # Show fading "Added!" message if triggered
             if st.session_state.get(f"added_{p['name']}"):
                 st.markdown('<p class="added-message" style="color:green;font-weight:bold;">Added!</p>', unsafe_allow_html=True)
 
@@ -192,14 +194,12 @@ if st.session_state.page == "home":
 
                 cols_btn = st.columns(2)
 
-                # ADD TO CART BUTTON
                 with cols_btn[0]:
                     if st.button("Add to Cart", key=add_key):
                         st.session_state.cart[p["name"]] = st.session_state.cart.get(p["name"], 0) + 1
                         st.session_state[f"added_{p['name']}"] = True
                         st.rerun()
 
-                # REMOVE BUTTON
                 with cols_btn[1]:
                     if st.button("Remove", key=remove_key):
                         if p["name"] in st.session_state.cart:
@@ -209,7 +209,6 @@ if st.session_state.page == "home":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # Clear all "Added!" flags after showing once
     for key in list(st.session_state.keys()):
         if key.startswith("added_"):
             del st.session_state[key]
@@ -252,7 +251,6 @@ elif st.session_state.page == "terms":
     to all of the terms and conditions listed above.
     """)
 
-    # Accept terms once, then go to cart
     if st.button("I Agree — Go to Cart"):
         st.session_state.terms_accepted = True
         st.session_state.page = "cart"
@@ -262,6 +260,7 @@ elif st.session_state.page == "terms":
 # ============================================================
 # ======================== CART PAGE =========================
 # ============================================================
+
 elif st.session_state.page == "cart":
 
     header_left, header_right = st.columns([3, 1])
@@ -274,7 +273,6 @@ elif st.session_state.page == "cart":
         qty_key = f"qty_{name}"
         current_qty = st.session_state.cart[name]
 
-        # Create number input but DO NOT calculate subtotal yet
         new_qty = st.number_input(
             f"Qty for {name}",
             min_value=1,
@@ -283,11 +281,10 @@ elif st.session_state.page == "cart":
             key=qty_key
         )
 
-        # Update cart immediately
         if new_qty != current_qty:
             st.session_state.cart[name] = new_qty
 
-    # NOW calculate subtotal AFTER all updates
+    # NOW calculate subtotal AFTER updates
     subtotal = 0
     total_items = sum(st.session_state.cart.values())
     for name, qty in st.session_state.cart.items():
@@ -356,3 +353,35 @@ elif st.session_state.page == "cart":
         st.write("---")
 
     st.markdown(f"### Subtotal: **${subtotal:.2f}**")
+
+    # ---------- SUBMIT ORDER BUTTON ----------
+    if "orders" not in st.session_state:
+        st.session_state.orders = []
+
+    if st.button("Submit Order"):
+        loading_box = st.empty()
+        loading_box.info("Processing your order... Please wait.")
+        time.sleep(5)
+        loading_box.empty()
+
+        # Generate order number
+        import random
+        order_number = random.randint(100000, 999999)
+
+        # Save order
+        st.session_state.orders.append({
+            "order_number": order_number,
+            "items": st.session_state.cart.copy()
+        })
+
+        # Save order permanently to a file
+        with open("orders.txt", "a") as f:
+            f.write(f"Order Number: {order_number}\n")
+            for item, qty in st.session_state.orders[-1]["items"].items():
+                f.write(f"- {item} x{qty}\n")
+            f.write("\n")
+
+        st.success(f"Thank you for shopping at The Jersey Forge. Your order number is {order_number}")
+
+        # Clear cart
+        st.session_state.cart = {}
