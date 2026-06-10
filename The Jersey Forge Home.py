@@ -262,7 +262,6 @@ elif st.session_state.page == "terms":
 # ============================================================
 # ======================== CART PAGE =========================
 # ============================================================
-
 elif st.session_state.page == "cart":
 
     header_left, header_right = st.columns([3, 1])
@@ -270,6 +269,25 @@ elif st.session_state.page == "cart":
     with header_left:
         st.markdown("<h2 style='margin-bottom:0;'>Shopping Cart</h2>", unsafe_allow_html=True)
 
+    # FIRST: Update quantities BEFORE calculating subtotal
+    for name in list(st.session_state.cart.keys()):
+        qty_key = f"qty_{name}"
+        current_qty = st.session_state.cart[name]
+
+        # Create number input but DO NOT calculate subtotal yet
+        new_qty = st.number_input(
+            f"Qty for {name}",
+            min_value=1,
+            max_value=10,
+            value=current_qty,
+            key=qty_key
+        )
+
+        # Update cart immediately
+        if new_qty != current_qty:
+            st.session_state.cart[name] = new_qty
+
+    # NOW calculate subtotal AFTER all updates
     subtotal = 0
     total_items = sum(st.session_state.cart.values())
     for name, qty in st.session_state.cart.items():
@@ -284,13 +302,13 @@ elif st.session_state.page == "cart":
         )
 
     st.write("---")
-
     st.button("⬅ Back to Store", on_click=go_home)
 
     if not st.session_state.cart:
         st.write("Your cart is empty.")
         st.stop()
 
+    # DISPLAY CART ITEMS
     for name, qty in st.session_state.cart.items():
 
         price = next(p["price"] for p in products if p["name"] == name)
@@ -324,17 +342,6 @@ elif st.session_state.page == "cart":
             st.write("Size: Youth 11–14")
             st.write("In Stock")
 
-            new_qty = st.number_input(
-                f"Qty for {name}",
-                min_value=1,
-                max_value=10,
-                value=qty,
-                key=f"qty_{name}"
-            )
-
-            if new_qty != qty:
-                st.session_state.cart[name] = new_qty
-
             colA, colB = st.columns(2)
             with colA:
                 if st.button("Delete", key=f"del_{name}"):
@@ -344,7 +351,7 @@ elif st.session_state.page == "cart":
                 st.write("Save for later")
 
         with price_col:
-            st.markdown(f"**${price:.2f}**")
+            st.markdown(f"**${price * qty:.2f}**")
 
         st.write("---")
 
