@@ -4,8 +4,8 @@ import smtplib
 from email.mime.text import MIMEText
 
 def send_order_email(order_number, items):
-    sender = "mail2divij@gmail.com"
-    receiver = "mail2divij@gmail.com"
+    sender = "konerudivij@gmail.com"
+    receiver = "konerudivij@gmail.com"
     password = "ualo rcqp ydgq tvcp"  # Replace with your Gmail App Password
 
     body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
