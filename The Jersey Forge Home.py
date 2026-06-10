@@ -10,11 +10,12 @@ st.markdown(
         font-family: Arial, sans-serif;
     }
     .product-box {
-        border: 2px solid #d32f2f;
+         
         border-radius: 10px;
         padding: 16px;
         margin-bottom: 2in; /* ~2 inches spacing */
-        background-color: #fff7f7;
+         
+        
     }
     .coming-soon-label {
         display: inline-block;
@@ -31,7 +32,7 @@ st.markdown(
         font-size: 1.1rem;
     }
     .header-banner {
-        background: linear-gradient(90deg, #b71c1c, #fbc02d, #1e88e5);
+        background: black;
         color: white;
         padding: 18px;
         border-radius: 12px;
@@ -117,7 +118,7 @@ products = [
 # ---------- HEADER / DECORATIONS ----------
 st.markdown(
     '<div class="header-banner"><h1>The Jersey Forge</h1>'
-    '<p>Fully customized, fan-inspired jerseys with no official NBA affiliation.</p>'
+    '<p>Our jerseys for cheap, doesnt make your wallet weep.</p>'
     '</div>',
     unsafe_allow_html=True,
 )
