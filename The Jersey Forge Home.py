@@ -12,6 +12,14 @@ def send_order_email(order_number, items):
     for item, qty in items.items():
         body += f"- {item} x{qty}\n"
 
+    totalprice = 0
+    for name, qty in items.items():
+        totalprice += qty * 45
+
+    pricemsg = ""
+    pricemsg += f" The full price of the order is ${totalprice}"
+    body += f"\n\n{pricemsg}"
+
     msg = MIMEText(body)
     msg["Subject"] = f"New Jersey Forge Order #{order_number}"
     msg["From"] = sender
