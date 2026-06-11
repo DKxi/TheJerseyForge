@@ -3,22 +3,18 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 
+# ---------------- EMAIL FUNCTION ----------------
 def send_order_email(order_number, items):
     sender = "konerudivij@gmail.com"
     receiver = "konerudivij@gmail.com"
-    password = "ualo rcqp ydgq tvcp"  # Replace with your Gmail App Password
+    password = "ualo rcqp ydgq tvcp"  # Your Gmail App Password
 
     body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
     for item, qty in items.items():
         body += f"- {item} x{qty}\n"
 
-    totalprice = 0
-    for name, qty in items.items():
-        totalprice += qty * 45
-
-    pricemsg = ""
-    pricemsg += f" The full price of the order is ${totalprice}"
-    body += f"\n\n{pricemsg}"
+    totalprice = sum(qty * 45 for qty in items.values())
+    body += f"\n\nTotal Price: ${totalprice}"
 
     msg = MIMEText(body)
     msg["Subject"] = f"New Jersey Forge Order #{order_number}"
@@ -29,20 +25,20 @@ def send_order_email(order_number, items):
         server.login(sender, password)
         server.sendmail(sender, receiver, msg.as_string())
 
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="The Jersey Forge", layout="wide")
 
-# ---------- PAGE STATE ----------
+# ---------------- SESSION STATE ----------------
 if "page" not in st.session_state:
     st.session_state.page = "home"
 
 if "cart" not in st.session_state:
     st.session_state.cart = {}
 
-# Track if terms were accepted this session
 if "terms_accepted" not in st.session_state:
     st.session_state.terms_accepted = False
 
-# ---------- NAVIGATION FUNCTIONS ----------
+# ---------------- NAVIGATION ----------------
 def go_to_terms():
     st.session_state.page = "terms"
 
@@ -52,106 +48,139 @@ def go_to_cart():
 def go_home():
     st.session_state.page = "home"
 
+# ---------------- GLOBAL STYLING ----------------
+st.markdown("""
+<style>
 
-# ---------- BASIC STYLING ----------
-st.markdown(
-    """
-    <style>
 body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(#f7f3e9, #f0e4d0);
-    cursor: url('https://cur.cursors-4u.net/sports/spo-1/spo16.cur'), auto;
+    background: linear-gradient(135deg, #1e1e2f, #2a2a40, #1e1e2f);
+    background-size: 400% 400%;
+    animation: gradientMove 12s ease infinite;
+    font-family: 'Segoe UI', sans-serif;
+}
+/* CART BUTTON + BADGE */
+.cart-container {
+    position: relative;
+    display: inline-block;
 }
 
-/* PRODUCT BOX */
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ff6600;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(255, 120, 0, 0.8);
+}
+
+
+@keyframes gradientMove {
+    0% {background-position: 0% 50%;}
+    50% {background-position: 100% 50%;}
+    100% {background-position: 0% 50%;}
+}
+
+/* HEADER */
+.header-banner {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    border: 2px solid rgba(255,255,255,0.15);
+    box-shadow: 0 0 25px rgba(255, 165, 0, 0.5);
+}
+
+.header-banner h1 {
+    font-size: 48px;
+    color: #ffcc66;
+    text-shadow: 0 0 12px #ffcc66;
+}
+
+.header-banner p {
+    font-size: 20px;
+    color: #fff;
+}
+
+/* PRODUCT CARD */
 .product-box {
-    border-radius: 14px;
-    padding: 4px;
-    margin-bottom: 12px;
-    background: white;
-    height: 2in;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 12px;
+    margin-bottom: 2px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
     transition: transform .25s ease, box-shadow .25s ease;
-    overflow: hidden;
+    height: 2in;
 }
 
 .product-box:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    transform: scale(1.04);
+    box-shadow: 0 10px 28px rgba(255,255,255,0.25);
 }
 
-/* FADE-OUT for Added! */
-.added-message {
-    animation: fadeOut 1.2s forwards;
+/* BUTTONS */
+button[kind="secondary"] {
+    background: linear-gradient(135deg, #ffcc66, #ff9933);
+    color: black !important;
+    border-radius: 10px !important;
+    padding: 8px 14px !important;
+    font-weight: bold !important;
+    transition: 0.2s ease;
 }
 
-@keyframes fadeOut {
-    0% { opacity: 1; }
-    70% { opacity: 1; }
-    100% { opacity: 0; }
+button[kind="secondary"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px #ffcc66;
 }
 
-/* COMING SOON LABEL */
-.coming-soon-label {
-    display: inline-block;
-    padding: 4px 8px;
-    background-color: #ff9800;
+/* SUBMIT BUTTON */
+.submit-btn {
+    background: linear-gradient(135deg, #ff9933, #ff6600);
+    padding: 16px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: bold;
     color: white;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    margin-top: 8px;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 0 18px rgba(255, 120, 0, 0.6);
+}
+
+.submit-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 28px rgba(255, 120, 0, 1);
 }
 
 /* PRICE TAG */
 .price-tag {
     font-weight: bold;
-    color: #2e7d32;
-    font-size: 1.1rem;
+    color: #ffcc66;
+    font-size: 1.2rem;
+/* ADDED! message */
+.added-message {
+    color: #7CFC00;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 0 0 8px #7CFC00;
+    animation: fadeOut 1.2s forwards;
 }
 
-/* HEADER — BASKETBALL COURT */
-.header-banner {
-    background: linear-gradient(90deg, #d9a86c, #c68c53, #d9a86c);
-    color: white;
-    padding: 32px;
-    border-radius: 16px;
-    text-align: center;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
-    border: 4px solid #8b5a2b;
-    box-shadow: 0 0 25px rgba(255, 165, 0, 0.6);
+@keyframes fadeOut {
+    0% { opacity: 1; transform: scale(1); }
+    60% { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 0; transform: scale(1); }
 }
 
-.header-banner::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 100%;
-    height: 4px;
-    background: white;
-    opacity: 0.7;
-}
+</style>
+""", unsafe_allow_html=True)
 
-.header-banner::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 140px;
-    height: 140px;
-    border: 5px solid white;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.7;
-}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# ---------- PRODUCT DATA ----------
+# ---------------- PRODUCT DATA ----------------
 products = [
     {"name": "Michael Jordan 1996-97 Chicago Bulls Hardwood Swingman Jersey - For ages 11-14", "price": 45, "column": 1, "coming_soon": False},
     {"name": "Men's Chicago Bulls Michael Jordan White 1997/98 Jersey - For ages 11-14", "price": 45, "column": 1, "coming_soon": False},
@@ -174,29 +203,38 @@ if st.session_state.page == "home":
 
     st.markdown(
         '<div class="header-banner"><h1>The Jersey Forge</h1>'
-        '<p>Our jerseys for cheap, doesnt make your wallet weep.</p>'
+        '<p>Our jerseys for cheap, doesn’t make your wallet weep.</p>'
         '</div>',
         unsafe_allow_html=True,
     )
 
-    # Cart button moved to the right side
     cart_col_left, cart_col_right = st.columns([8, 1])
 
     with cart_col_right:
+
+        total_items = sum(st.session_state.cart.values())
+
+        # HTML wrapper for badge
+        st.markdown(
+            f"""
+            <div class="cart-container">
+                <div class="cart-badge">{total_items}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Real Streamlit button (clickable)
         if st.button("🛒 Cart"):
-            if st.session_state.terms_accepted:
-                st.session_state.page = "cart"
-            else:
-                st.session_state.page = "terms"
+            st.session_state.page = "cart" if st.session_state.terms_accepted else "terms"
 
     search_query = st.text_input("", placeholder="Search Here", label_visibility="collapsed")
-    st.write("🔍 Use the search bar above to filter jerseys by any word in the name.")
 
     def filter_products(query):
         if not query:
             return products
         q = query.strip().lower()
-        return [p for p in products if q in p["name"].lower().split()]
+        return [p for p in products if q in p["name"].lower()]
 
     filtered_products = filter_products(search_query)
 
@@ -208,14 +246,16 @@ if st.session_state.page == "home":
         with col:
             st.markdown('<div class="product-box">', unsafe_allow_html=True)
 
-            if st.session_state.get(f"added_{p['name']}"):
-                st.markdown('<p class="added-message" style="color:green;font-weight:bold;">Added!</p>', unsafe_allow_html=True)
-
             st.markdown(f"**{p['name']}**")
             st.markdown(f'<span class="price-tag">$ {p["price"]}.00</span>', unsafe_allow_html=True)
+            # Show “Added!” for 2 seconds for THIS product only
+            timestamp_key = f"added_timestamp_{p['name']}"
+            if timestamp_key in st.session_state:
+                if time.time() - st.session_state[timestamp_key] < 2:
+                    st.markdown('<p class="added-message">Added!</p>', unsafe_allow_html=True)
 
             if p["coming_soon"]:
-                st.markdown('<div class="coming-soon-label">COMING SOON</div>', unsafe_allow_html=True)
+                st.markdown('<div style="color:#ff9933;font-weight:bold;">COMING SOON</div>', unsafe_allow_html=True)
             else:
                 add_key = f"add_{p['name']}"
                 remove_key = f"remove_{p['name']}"
@@ -223,9 +263,9 @@ if st.session_state.page == "home":
                 cols_btn = st.columns(2)
 
                 with cols_btn[0]:
-                    if st.button("Add to Cart", key=add_key):
+                    if st.button("Add", key=add_key):
                         st.session_state.cart[p["name"]] = st.session_state.cart.get(p["name"], 0) + 1
-                        st.session_state[f"added_{p['name']}"] = True
+                        st.session_state[f"added_timestamp_{p['name']}"] = time.time()
                         st.rerun()
 
                 with cols_btn[1]:
@@ -237,10 +277,6 @@ if st.session_state.page == "home":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    for key in list(st.session_state.keys()):
-        if key.startswith("added_"):
-            del st.session_state[key]
-
 # ============================================================
 # ================= TERMS & CONDITIONS PAGE ==================
 # ============================================================
@@ -250,7 +286,7 @@ elif st.session_state.page == "terms":
     st.title("Terms & Conditions – The Jersey Forge")
 
     st.write("""
-    ### 1. Independent, Customized Products
+    #### 1. Independent, Customized Products
     All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products. 
     They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.
 
@@ -276,7 +312,7 @@ elif st.session_state.page == "terms":
 
     ### 7. Acceptance of Terms
     By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed** 
-    to all of the terms and conditions listed above.
+    to all of the terms and conditions listed above..
     """)
 
     if st.button("I Agree — Go to Cart"):
@@ -291,55 +327,26 @@ elif st.session_state.page == "terms":
 
 elif st.session_state.page == "cart":
 
-    header_left, header_right = st.columns([3, 1])
-
-    with header_left:
-        st.markdown("<h2 style='margin-bottom:0;'>Shopping Cart</h2>", unsafe_allow_html=True)
-
-    # FIRST: Update quantities BEFORE calculating subtotal
-    for name in list(st.session_state.cart.keys()):
-        qty_key = f"qty_{name}"
-        current_qty = st.session_state.cart[name]
-
-        new_qty = st.number_input(
-            f"Qty for {name}",
-            min_value=1,
-            max_value=10,
-            value=current_qty,
-            key=qty_key
-        )
-
-        if new_qty != current_qty:
-            st.session_state.cart[name] = new_qty
-
-    # NOW calculate subtotal AFTER updates
-    subtotal = 0
-    total_items = sum(st.session_state.cart.values())
-    for name, qty in st.session_state.cart.items():
-        price = next(p["price"] for p in products if p["name"] == name)
-        subtotal += price * qty
-
-    with header_right:
-        st.markdown(
-            f"<p style='text-align:right; font-size:16px; margin-top:18px;'>"
-            f"Subtotal ({total_items} items): <strong>${subtotal:.2f}</strong></p>",
-            unsafe_allow_html=True
-        )
-
-    st.write("---")
-    st.button("⬅ Back to Store", on_click=go_home)
+    st.markdown("<h2 style='color:white;'>Shopping Cart</h2>", unsafe_allow_html=True)
 
     if not st.session_state.cart:
         st.write("Your cart is empty.")
         st.stop()
 
-    # DISPLAY CART ITEMS
+    st.write("---")
+
+    subtotal = 0
+
     for name, qty in st.session_state.cart.items():
 
         price = next(p["price"] for p in products if p["name"] == name)
+        item_total = price * qty
+        subtotal += item_total
 
-        img_col, info_col, price_col = st.columns([1, 3, 1])
+        # Amazon-style row layout
+        img_col, info_col, price_col = st.columns([1, 4, 1])
 
+        # LEFT — IMAGE BOX
         with img_col:
             st.markdown(
                 """
@@ -361,60 +368,57 @@ elif st.session_state.page == "cart":
                 unsafe_allow_html=True
             )
 
+        # MIDDLE — PRODUCT INFO
         with info_col:
             st.markdown(f"**{name}**")
             st.write("Color: Custom")
             st.write("Size: Youth 11–14")
             st.write("In Stock")
 
-            colA, colB = st.columns(2)
-            with colA:
-                if st.button("Delete", key=f"del_{name}"):
-                    del st.session_state.cart[name]
-                    st.rerun()
-            with colB:
-                st.write("Save for later")
+            # Quantity selector
+            new_qty = st.number_input(
+                "Qty",
+                min_value=1,
+                max_value=10,
+                value=qty,
+                key=f"qty_{name}"
+            )
 
+            if new_qty != qty:
+                st.session_state.cart[name] = new_qty
+
+            # Delete button
+            if st.button("Delete", key=f"del_{name}"):
+                del st.session_state.cart[name]
+                st.rerun()
+
+        # RIGHT — PRICE
         with price_col:
-            st.markdown(f"**${price * qty:.2f}**")
+            st.markdown(f"<h4 style='color:#ffcc66;'>${item_total:.2f}</h4>", unsafe_allow_html=True)
 
         st.write("---")
 
-    st.markdown(f"### Subtotal: **${subtotal:.2f}**")
+    # SUBTOTAL
+    st.markdown(f"<h3 style='color:#ffcc66;'>Subtotal: ${subtotal:.2f}</h3>", unsafe_allow_html=True)
 
-    # ---------- SUBMIT ORDER BUTTON ----------
-    if "orders" not in st.session_state:
-        st.session_state.orders = []
+    # BACK BUTTON
+    if st.button("⬅ Back to Store"):
+        go_home()
 
+    st.write("---")
+
+    # SUBMIT ORDER BUTTON
     if st.button("Submit Order"):
         loading_box = st.empty()
         loading_box.info("Processing your order... Please wait.")
         time.sleep(5)
         loading_box.empty()
 
-        # Generate order number
         import random
-
         order_number = random.randint(100000, 999999)
 
-        # Save order
-        st.session_state.orders.append({
-            "order_number": order_number,
-            "items": st.session_state.cart.copy()
-        })
-
-        # Send email notification
         send_order_email(order_number, st.session_state.cart.copy())
 
-        # Save order permanently to a file
-        with open("orders.txt", "a") as f:
-            f.write(f"Order Number: {order_number}\n")
-            for item, qty in st.session_state.orders[-1]["items"].items():
-                f.write(f"- {item} x{qty}\n")
-            f.write("\n")
+        st.success(f"Order submitted! Your order number is {order_number}, Contact the email mail2divij@gmail.com to get further instructions.")
 
-        st.success(f"Thank you for shopping at The Jersey Forge. Your order number is {order_number}")
-
-        # Clear cart
         st.session_state.cart = {}
-
