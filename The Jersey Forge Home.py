@@ -331,6 +331,11 @@ elif st.session_state.page == "cart":
 
     if not st.session_state.cart:
         st.write("Your cart is empty.")
+
+        # Back button still shows even when empty
+        if st.button("⬅ Back to Store"):
+            go_home()
+
         st.stop()
 
     st.write("---")
