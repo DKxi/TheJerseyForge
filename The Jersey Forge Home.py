@@ -198,7 +198,6 @@ products = [
 # ============================================================
 # ======================= HOME PAGE ==========================
 # ============================================================
-
 if st.session_state.page == "home":
 
     st.markdown(
@@ -208,13 +207,13 @@ if st.session_state.page == "home":
         unsafe_allow_html=True,
     )
 
-    cart_col_left, cart_col_right = st.columns([8, 1])
+    # 3 columns: left space, cart button, why us button
+    # PERFECTLY ALIGNED BUTTON ROW
+    col_left, col_cart, col_why = st.columns([7, 1, 1])
 
-    with cart_col_right:
-
+    with col_cart:
         total_items = sum(st.session_state.cart.values())
 
-        # HTML wrapper for badge
         st.markdown(
             f"""
             <div class="cart-container">
@@ -224,9 +223,20 @@ if st.session_state.page == "home":
             unsafe_allow_html=True
         )
 
-        # Real Streamlit button (clickable)
-        if st.button("🛒 Cart"):
-            st.session_state.page = "cart" if st.session_state.terms_accepted else "terms"
+        st.button(
+            "🛒 Cart",
+            key="cart_button_home",
+            on_click=lambda: st.session_state.update(
+                page="cart" if st.session_state.terms_accepted else "terms"
+            )
+        )
+
+    with col_why:
+        st.button(
+            "Why Us",
+            key="whyus_button",
+            on_click=lambda: st.session_state.update(page="whyus")
+        )
 
     search_query = st.text_input("", placeholder="Search Here", label_visibility="collapsed")
 
@@ -248,7 +258,7 @@ if st.session_state.page == "home":
 
             st.markdown(f"**{p['name']}**")
             st.markdown(f'<span class="price-tag">$ {p["price"]}.00</span>', unsafe_allow_html=True)
-            # Show “Added!” for 2 seconds for THIS product only
+
             timestamp_key = f"added_timestamp_{p['name']}"
             if timestamp_key in st.session_state:
                 if time.time() - st.session_state[timestamp_key] < 2:
@@ -315,11 +325,11 @@ elif st.session_state.page == "terms":
     to all of the terms and conditions listed above..
     """)
 
-    if st.button("I Agree — Go to Cart"):
+    if st.button("I Agree — Go to Cart", key="agree_terms"):
         st.session_state.terms_accepted = True
         st.session_state.page = "cart"
 
-    st.button("Back to Store", on_click=go_home)
+    st.button("Back to Store", on_click=go_home, key="back_terms")
 
 # ============================================================
 # ======================== CART PAGE =========================
@@ -332,8 +342,7 @@ elif st.session_state.page == "cart":
     if not st.session_state.cart:
         st.write("Your cart is empty.")
 
-        # Back button still shows even when empty
-        if st.button("⬅ Back to Store"):
+        if st.button("⬅ Back to Store", key="back_empty_cart"):
             go_home()
 
         st.stop()
@@ -348,10 +357,8 @@ elif st.session_state.page == "cart":
         item_total = price * qty
         subtotal += item_total
 
-        # Amazon-style row layout
         img_col, info_col, price_col = st.columns([1, 4, 1])
 
-        # LEFT — IMAGE BOX
         with img_col:
             st.markdown(
                 """
@@ -373,14 +380,12 @@ elif st.session_state.page == "cart":
                 unsafe_allow_html=True
             )
 
-        # MIDDLE — PRODUCT INFO
         with info_col:
             st.markdown(f"**{name}**")
             st.write("Color: Custom")
             st.write("Size: Youth 11–14")
             st.write("In Stock")
 
-            # Quantity selector
             new_qty = st.number_input(
                 "Qty",
                 min_value=1,
@@ -392,28 +397,23 @@ elif st.session_state.page == "cart":
             if new_qty != qty:
                 st.session_state.cart[name] = new_qty
 
-            # Delete button
             if st.button("Delete", key=f"del_{name}"):
                 del st.session_state.cart[name]
                 st.rerun()
 
-        # RIGHT — PRICE
         with price_col:
             st.markdown(f"<h4 style='color:#ffcc66;'>${item_total:.2f}</h4>", unsafe_allow_html=True)
 
         st.write("---")
 
-    # SUBTOTAL
     st.markdown(f"<h3 style='color:#ffcc66;'>Subtotal: ${subtotal:.2f}</h3>", unsafe_allow_html=True)
 
-    # BACK BUTTON
-    if st.button("⬅ Back to Store"):
+    if st.button("⬅ Back to Store", key="back_cart"):
         go_home()
 
     st.write("---")
 
-    # SUBMIT ORDER BUTTON
-    if st.button("Submit Order"):
+    if st.button("Submit Order", key="submit_order"):
         loading_box = st.empty()
         loading_box.info("Processing your order... Please wait.")
         time.sleep(5)
@@ -427,3 +427,22 @@ elif st.session_state.page == "cart":
         st.success(f"Order submitted! Your order number is {order_number}, Contact the email mail2divij@gmail.com to get further instructions.")
 
         st.session_state.cart = {}
+
+# ============================================================
+# ======================== WHY US PAGE ========================
+# ============================================================
+
+elif st.session_state.page == "whyus":
+
+    st.markdown("<h2 style='color:white;'>Why Us</h2>", unsafe_allow_html=True)
+
+    st.write("""
+    I built this website because growing up, I always wanted jerseys — but every time I asked my parents, the answer was the same: they were too expensive. That feeling stuck with me. I remember the disappointment and frustration of wanting to rep my favorite players but not being able to afford it. That’s why this business exists today. I wanted to create a place where people don’t have to feel that same pain, where jerseys are affordable, accessible, and made for real fans who deserve better.
+    """)
+
+    st.write("""
+    Every jersey we make carries that mission. The work ethic behind each one comes from the promise I made to myself years ago — to build something better than what I had access to. We put care into every stitch, every design, and every order because this isn’t just a business; it’s a passion born from experience. Jerseys for cheap shouldn’t make your wallet weep, and here, they never will. This is quality made with purpose, for fans who deserve the best without breaking the bank.
+    """)
+
+    if st.button("⬅ Back to Store", key="back_from_whyus"):
+        st.session_state.page = "home"
