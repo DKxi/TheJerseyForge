@@ -4,10 +4,11 @@ import smtplib
 from email.mime.text import MIMEText
 
 # ---------------- EMAIL FUNCTION ----------------
-def send_order_email(order_number, items):
+def send_order_email(order_number, items, customer_email):
     sender = "konerudivij@gmail.com"
-    receiver = "konerudivij@gmail.com"
-    password = "ualo rcqp ydgq tvcp"  # Your Gmail App Password
+    password = "ualo rcqp ydgq tvcp"  # Gmail App Password
+
+    recipients = ["konerudivij@gmail.com", customer_email]
 
     body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
     for item, qty in items.items():
@@ -19,11 +20,11 @@ def send_order_email(order_number, items):
     msg = MIMEText(body)
     msg["Subject"] = f"New Jersey Forge Order #{order_number}"
     msg["From"] = sender
-    msg["To"] = receiver
+    msg["To"] = ", ".join(recipients)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender, password)
-        server.sendmail(sender, receiver, msg.as_string())
+        server.sendmail(sender, recipients, msg.as_string())
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="The Jersey Forge", layout="wide")
@@ -413,20 +414,56 @@ elif st.session_state.page == "cart":
 
     st.write("---")
 
-    if st.button("Submit Order", key="submit_order"):
+    # ---------------- SUBMIT ORDER FLOW ----------------
+
+    # Initialize stage
+    if "email_stage" not in st.session_state:
+        st.session_state.email_stage = "idle"
+
+    # CLICK SUBMIT ORDER → ask for email
+    if st.button("Submit Order", key="submit_order") and st.session_state.email_stage == "idle":
+        st.session_state.email_stage = "ask_email"
+
+    # STAGE 1 — Ask for customer email
+    if st.session_state.email_stage == "ask_email":
+        customer_email = st.text_input("Enter your email to receive your order confirmation:")
+
+        if st.button("Confirm Email", key="confirm_email"):
+            if customer_email.strip() == "":
+                st.error("Please enter a valid email.")
+            else:
+                st.session_state.customer_email = customer_email
+                st.session_state.email_stage = "loading"
+
+    # STAGE 2 — 5 second loading screen
+    if st.session_state.email_stage == "loading":
         loading_box = st.empty()
         loading_box.info("Processing your order... Please wait.")
         time.sleep(5)
         loading_box.empty()
 
+        # Generate order number
         import random
-        order_number = random.randint(100000, 999999)
 
-        send_order_email(order_number, st.session_state.cart.copy())
+        st.session_state.order_number = random.randint(100000, 999999)
 
-        st.success(f"Order submitted! Your order number is {order_number}, Contact the email mail2divij@gmail.com to get further instructions.")
+        # Move to final stage
+        st.session_state.email_stage = "final"
+
+    # STAGE 3 — Show order number + send email
+    if st.session_state.email_stage == "final":
+        st.success(f"Order submitted! Your order number is {st.session_state.order_number}")
+
+        send_order_email(
+            st.session_state.order_number,
+            st.session_state.cart.copy(),
+            st.session_state.customer_email
+        )
+
+        st.success(f"Confirmation sent to {st.session_state.customer_email}")
 
         st.session_state.cart = {}
+        st.session_state.email_stage = "idle"
 
 # ============================================================
 # ======================== WHY US PAGE ========================
