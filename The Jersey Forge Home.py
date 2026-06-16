@@ -15,7 +15,8 @@ def send_order_email(order_number, items, customer_email):
         body += f"- {item} x{qty}\n"
 
     totalprice = sum(qty * 45 for qty in items.values())
-    body += f"\n\nTotal Price: ${totalprice}"
+    body += f"\n\nTotal Price: ${totalprice}\n\n\n"
+    body += f"\nThe Terms and Conditions of your purchase are:  {st.session_state.tc}\n\n\n"
 
     msg = MIMEText(body)
     msg["Subject"] = f"New Jersey Forge Order #{order_number}"
@@ -38,6 +39,8 @@ if "cart" not in st.session_state:
 
 if "terms_accepted" not in st.session_state:
     st.session_state.terms_accepted = False
+
+st.session_state.tc="\n\nTerms & Conditions – The Jersey Forge \n\n       #### 1. Independent, Customized Products\n\n      All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products.\n      They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.\n\n      ### 2. No Association with Original Brands\n     These jerseys are artistic interpretations and **not replicas** of official products.\n      Any references to player names, numbers, or teams are purely for descriptive purposes and do not imply endorsement or association.\n\n      ### 3. Custom, Fan-Made Items\n     Each jersey is a **custom, fan-made item** created from independently sourced materials.\n      Designs, colors, and styles are inspired by basketball culture but are not official team merchandise.\n\n      ### 4. Waiver of Claims\n     By purchasing from **The Jersey Forge**, you agree that you **cannot take legal action** against The Jersey Forge, its owners, or its creators\n      for any claims related to branding, likeness, or unofficial status of the products.\n\n      ### 5. No Returns or Refunds\n     All sales are **final**. Due to the custom nature of each jersey, we do **not** offer returns, exchanges, or refunds,\n      except in rare cases of significant manufacturing defects, which are evaluated on a case-by-case basis.\n\n      ### 6. Care and Usage\n     Jerseys should be washed gently and air-dried to preserve print and fabric quality.\n      The Jersey Forge is not responsible for damage caused by improper care, misuse, or alterations made after purchase.\n\n      ### 7. Acceptance of Terms\n     By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed**\n      to all of the terms and conditions listed above..\n\n\n From \n The Jersey Forge Team.     "
 
 # ---------------- NAVIGATION ----------------
 def go_to_terms():
