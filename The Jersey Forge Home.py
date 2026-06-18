@@ -284,7 +284,7 @@ if st.session_state.page == "home":
             st.markdown('<div class="product-box">', unsafe_allow_html=True)
 
             if "image" in p:
-                st.image(p["image"], width=800)
+                st.image(p["image"], width=1080)
 
             st.markdown(f"**{p['name']}**")
             st.markdown(f'<span class="price-tag">$ {p["price"]}.00</span>', unsafe_allow_html=True)
