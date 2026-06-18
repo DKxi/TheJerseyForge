@@ -1,24 +1,31 @@
 import streamlit as st
 import time
+import random
 import smtplib
 from email.mime.text import MIMEText
 
 
 # ---------------- EMAIL FUNCTION ----------------
-def send_order_email(order_number, items, customer_email):
-    sender = "konerudivij@gmail.com"
-    password = "ualo rcqp ydgq tvcp"  # Gmail App Password
+def send_order_email(order_number, cart, products_list, customer_email):
+    # Credentials pulled from .streamlit/secrets.toml — see setup instructions.
+    sender = st.secrets["email"]["sender"]
+    password = st.secrets["email"]["app_password"]
 
-    recipients = ["konerudivij@gmail.com", customer_email]
+    recipients = [sender, customer_email]
+
+    # Build a lookup so we can get the price for each item name in the cart
+    price_lookup = {p["name"]: p["price"] for p in products_list}
 
     body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
-    for item, data in items.items():
-        qty = data["qty"]
-        body += f"- {item} x{qty}\n"
+    total_price = 0
+    for item_name, qty in cart.items():
+        price = price_lookup.get(item_name, 0)
+        line_total = price * qty
+        total_price += line_total
+        body += f"- {item_name} x{qty} (${line_total:.2f})\n"
 
-    totalprice = sum(data["qty"] * data["price"] for data in items.values())
-    body += f"\n\nTotal Price: ${totalprice}\n\n\n"
-    body += f"\nThe Terms and Conditions of your purchase are:  {st.session_state.tc}\n\n\n"
+    body += f"\n\nTotal Price: ${total_price:.2f}\n\n\n"
+    body += f"\nThe Terms and Conditions of your purchase are:\n{st.session_state.tc}\n\n\n"
 
     msg = MIMEText(body)
     msg["Subject"] = f"New Jersey Forge Order #{order_number}"
@@ -42,6 +49,9 @@ if "cart" not in st.session_state:
 
 if "terms_accepted" not in st.session_state:
     st.session_state.terms_accepted = False
+
+if "email_stage" not in st.session_state:
+    st.session_state.email_stage = "idle"
 
 st.session_state.tc = """
 Terms & Conditions – The Jersey Forge
@@ -237,7 +247,7 @@ if st.session_state.page == "home":
     col_left, col_cart, col_why = st.columns([7, 1, 1])
 
     with col_cart:
-        total_items = sum(item["qty"] for item in st.session_state.cart.values())
+        total_items = sum(st.session_state.cart.values())
 
         st.markdown(
             f"""
@@ -303,15 +313,11 @@ if st.session_state.page == "home":
                 cols_btn = st.columns(2)
 
                 with cols_btn[0]:
-                    if st.button("Add", key=add_key):
+                    if st.button("Add to Cart", key=add_key):
                         if p["name"] not in st.session_state.cart:
-                            st.session_state.cart[p["name"]] = {
-                                "qty": 1,
-                                "price": p["price"],
-                                "image": p.get("image", None)
-                            }
+                            st.session_state.cart[p["name"]] = 1
                         else:
-                            st.session_state.cart[p["name"]]["qty"] += 1
+                            st.session_state.cart[p["name"]] += 1
 
                         st.session_state[f"added_timestamp_{p['name']}"] = time.time()
                         st.rerun()
@@ -319,9 +325,10 @@ if st.session_state.page == "home":
                 with cols_btn[1]:
                     if st.button("Remove", key=remove_key):
                         if p["name"] in st.session_state.cart:
-                            st.session_state.cart[p["name"]]["qty"] -= 1
-                            if st.session_state.cart[p["name"]]["qty"] <= 0:
+                            st.session_state.cart[p["name"]] -= 1
+                            if st.session_state.cart[p["name"]] <= 0:
                                 del st.session_state.cart[p["name"]]
+                        st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -337,6 +344,7 @@ elif st.session_state.page == "terms":
     if st.button("I Agree — Go to Cart", key="agree_terms"):
         st.session_state.terms_accepted = True
         st.session_state.page = "cart"
+        st.rerun()
 
     st.button("Back to Store", on_click=go_home, key="back_terms")
 
@@ -352,6 +360,7 @@ elif st.session_state.page == "cart":
 
         if st.button("⬅ Back to Store", key="back_empty_cart"):
             go_home()
+            st.rerun()
 
         st.stop()
 
@@ -359,11 +368,10 @@ elif st.session_state.page == "cart":
 
     subtotal = 0
 
-    for name, data in st.session_state.cart.items():
-
-        qty = data["qty"]
-        price = data["price"]
-        image = data.get("image", None)
+    # Iterate over a copy of items so we can safely delete from the dict mid-loop
+    for name, qty in list(st.session_state.cart.items()):
+        price = next(p["price"] for p in products if p["name"] == name)
+        image = next((p.get("image") for p in products if p["name"] == name), None)
 
         item_total = price * qty
         subtotal += item_total
@@ -409,7 +417,8 @@ elif st.session_state.page == "cart":
             )
 
             if new_qty != qty:
-                st.session_state.cart[name]["qty"] = new_qty
+                st.session_state.cart[name] = new_qty
+                st.rerun()
 
             if st.button("Delete", key=f"del_{name}"):
                 del st.session_state.cart[name]
@@ -424,19 +433,19 @@ elif st.session_state.page == "cart":
 
     if st.button("⬅ Back to Store", key="back_cart"):
         go_home()
+        st.rerun()
 
     st.write("---")
 
     # ---------------- SUBMIT ORDER FLOW ----------------
 
-    if "email_stage" not in st.session_state:
-        st.session_state.email_stage = "idle"
-
     if st.button("Submit Order", key="submit_order") and st.session_state.email_stage == "idle":
         st.session_state.email_stage = "ask_email"
+        st.rerun()
 
     if st.session_state.email_stage == "ask_email":
-        customer_email = st.text_input("Enter your email to receive your order confirmation:")
+        customer_email = st.text_input("Enter your email to receive your order confirmation:",
+                                       key="customer_email_input")
 
         if st.button("Confirm Email", key="confirm_email"):
             if customer_email.strip() == "":
@@ -444,6 +453,7 @@ elif st.session_state.page == "cart":
             else:
                 st.session_state.customer_email = customer_email
                 st.session_state.email_stage = "loading"
+                st.rerun()
 
     if st.session_state.email_stage == "loading":
         loading_box = st.empty()
@@ -451,22 +461,23 @@ elif st.session_state.page == "cart":
         time.sleep(5)
         loading_box.empty()
 
-        import random
-
         st.session_state.order_number = random.randint(100000, 999999)
-
         st.session_state.email_stage = "final"
+        st.rerun()
 
     if st.session_state.email_stage == "final":
         st.success(f"Order submitted! Your order number is {st.session_state.order_number}")
 
-        send_order_email(
-            st.session_state.order_number,
-            st.session_state.cart.copy(),
-            st.session_state.customer_email
-        )
-
-        st.success(f"Confirmation sent to {st.session_state.customer_email}")
+        try:
+            send_order_email(
+                st.session_state.order_number,
+                st.session_state.cart.copy(),
+                products,
+                st.session_state.customer_email
+            )
+            st.success(f"Confirmation sent to {st.session_state.customer_email}")
+        except Exception as e:
+            st.error(f"Order was recorded, but the confirmation email failed to send: {e}")
 
         st.session_state.cart = {}
         st.session_state.email_stage = "idle"
@@ -483,9 +494,9 @@ elif st.session_state.page == "whyus":
     """)
 
     st.write("""
-    Every jersey we make carries that mission. The work ethic behind each one comes from the promise I made to myself years ago —
-from the promise I made to myself years ago — to build something better than what I had access to. We put care into every stitch, every design, and every order because this isn’t just a business; it’s a passion born from experience. Jerseys for cheap shouldn’t make your wallet weep, and here, they never will. This is quality made with purpose, for fans who deserve the best without breaking the bank.
+    Every jersey we make carries that mission. The work ethic behind each one comes from the promise I made to myself years ago — to build something better than what I had access to. We put care into every stitch, every design, and every order because this isn’t just a business; it’s a passion born from experience. Jerseys for cheap shouldn’t make your wallet weep, and here, they never will. This is quality made with purpose, for fans who deserve the best without breaking the bank.
     """)
 
     if st.button("⬅ Back to Store", key="back_from_whyus"):
         st.session_state.page = "home"
+        st.rerun()
