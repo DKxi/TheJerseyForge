@@ -3,6 +3,7 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 
+
 # ---------------- EMAIL FUNCTION ----------------
 def send_order_email(order_number, items, customer_email):
     sender = "konerudivij@gmail.com"
@@ -11,10 +12,11 @@ def send_order_email(order_number, items, customer_email):
     recipients = ["konerudivij@gmail.com", customer_email]
 
     body = f"New order received.\n\nOrder Number: {order_number}\n\nItems:\n"
-    for item, qty in items.items():
+    for item, data in items.items():
+        qty = data["qty"]
         body += f"- {item} x{qty}\n"
 
-    totalprice = sum(qty * 45 for qty in items.values())
+    totalprice = sum(data["qty"] * data["price"] for data in items.values())
     body += f"\n\nTotal Price: ${totalprice}\n\n\n"
     body += f"\nThe Terms and Conditions of your purchase are:  {st.session_state.tc}\n\n\n"
 
@@ -26,6 +28,7 @@ def send_order_email(order_number, items, customer_email):
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(sender, password)
         server.sendmail(sender, recipients, msg.as_string())
+
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="The Jersey Forge", layout="wide")
@@ -40,17 +43,54 @@ if "cart" not in st.session_state:
 if "terms_accepted" not in st.session_state:
     st.session_state.terms_accepted = False
 
-st.session_state.tc="\n\nTerms & Conditions – The Jersey Forge \n\n       #### 1. Independent, Customized Products\n\n      All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products.\n      They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.\n\n      ### 2. No Association with Original Brands\n     These jerseys are artistic interpretations and **not replicas** of official products.\n      Any references to player names, numbers, or teams are purely for descriptive purposes and do not imply endorsement or association.\n\n      ### 3. Custom, Fan-Made Items\n     Each jersey is a **custom, fan-made item** created from independently sourced materials.\n      Designs, colors, and styles are inspired by basketball culture but are not official team merchandise.\n\n      ### 4. Waiver of Claims\n     By purchasing from **The Jersey Forge**, you agree that you **cannot take legal action** against The Jersey Forge, its owners, or its creators\n      for any claims related to branding, likeness, or unofficial status of the products.\n\n      ### 5. No Returns or Refunds\n     All sales are **final**. Due to the custom nature of each jersey, we do **not** offer returns, exchanges, or refunds,\n      except in rare cases of significant manufacturing defects, which are evaluated on a case-by-case basis.\n\n      ### 6. Care and Usage\n     Jerseys should be washed gently and air-dried to preserve print and fabric quality.\n      The Jersey Forge is not responsible for damage caused by improper care, misuse, or alterations made after purchase.\n\n      ### 7. Acceptance of Terms\n     By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed**\n      to all of the terms and conditions listed above..\n\n\n From \n The Jersey Forge Team.     "
+st.session_state.tc = """
+Terms & Conditions – The Jersey Forge
+
+#### 1. Independent, Customized Products
+All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products.
+They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.
+
+### 2. No Association with Original Brands
+These jerseys are artistic interpretations and **not replicas** of official products.
+Any references to player names, numbers, or teams are purely for descriptive purposes and do not imply endorsement or association.
+
+### 3. Custom, Fan-Made Items
+Each jersey is a **custom, fan-made item** created from independently sourced materials.
+Designs, colors, and styles are inspired by basketball culture but are not official team merchandise.
+
+### 4. Waiver of Claims
+By purchasing from **The Jersey Forge**, you agree that you **cannot take legal action** against The Jersey Forge, its owners, or its creators
+for any claims related to branding, likeness, or unofficial status of the products.
+
+### 5. No Returns or Refunds
+All sales are **final**. Due to the custom nature of each jersey, we do **not** offer returns, exchanges, or refunds,
+except in rare cases of significant manufacturing defects, which are evaluated on a case-by-case basis.
+
+### 6. Care and Usage
+Jerseys should be washed gently and air-dried to preserve print and fabric quality.
+The Jersey Forge is not responsible for damage caused by improper care, misuse, or alterations made after purchase.
+
+### 7. Acceptance of Terms
+By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed**
+to all of the terms and conditions listed above.
+
+From  
+The Jersey Forge Team.
+"""
+
 
 # ---------------- NAVIGATION ----------------
 def go_to_terms():
     st.session_state.page = "terms"
 
+
 def go_to_cart():
     st.session_state.page = "cart"
 
+
 def go_home():
     st.session_state.page = "home"
+
 
 # ---------------- GLOBAL STYLING ----------------
 st.markdown("""
@@ -81,7 +121,6 @@ body {
     box-shadow: 0 0 6px rgba(255, 120, 0, 0.8);
 }
 
-
 @keyframes gradientMove {
     0% {background-position: 0% 50%;}
     50% {background-position: 100% 50%;}
@@ -110,22 +149,7 @@ body {
     color: #fff;
 }
 
-/* PRODUCT CARD */
-.product-box {
-    background: rgba(255,255,255,0.12);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    padding: 12px;
-    margin-bottom: 2px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-    transition: transform .25s ease, box-shadow .25s ease;
-    height: 2in;
-}
 
-.product-box:hover {
-    transform: scale(1.04);
-    box-shadow: 0 10px 28px rgba(255,255,255,0.25);
-}
 
 /* BUTTONS */
 button[kind="secondary"] {
@@ -142,30 +166,13 @@ button[kind="secondary"]:hover {
     box-shadow: 0 0 12px #ffcc66;
 }
 
-/* SUBMIT BUTTON */
-.submit-btn {
-    background: linear-gradient(135deg, #ff9933, #ff6600);
-    padding: 16px;
-    border-radius: 14px;
-    text-align: center;
-    font-size: 22px;
-    font-weight: bold;
-    color: white;
-    cursor: pointer;
-    transition: 0.25s ease;
-    box-shadow: 0 0 18px rgba(255, 120, 0, 0.6);
-}
-
-.submit-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 28px rgba(255, 120, 0, 1);
-}
-
 /* PRICE TAG */
 .price-tag {
     font-weight: bold;
     color: #ffcc66;
     font-size: 1.2rem;
+}
+
 /* ADDED! message */
 .added-message {
     color: #7CFC00;
@@ -186,17 +193,33 @@ button[kind="secondary"]:hover {
 
 # ---------------- PRODUCT DATA ----------------
 products = [
-    {"name": "Michael Jordan 1996-97 Chicago Bulls Hardwood Swingman Jersey - For ages 11-14", "price": 45, "column": 1, "coming_soon": False},
-    {"name": "Men's Chicago Bulls Michael Jordan White 1997/98 Jersey - For ages 11-14", "price": 45, "column": 1, "coming_soon": False},
-    {"name": "MICHAEL JORDAN Chicago Bulls 1997-98 Jersey - For ages 11-14", "price": 45, "column": 1, "coming_soon": False},
+    {
+        "name": "Michael Jordan 1996-97 Chicago Bulls Hardwood Swingman Jersey - For ages 11-14",
+        "price": 45,
+        "column": 1,
+        "coming_soon": False,
+        "image": "images/white_and_red_jersey.png"
+    },
 
-    {"name": "Dwyane Wade Miami Heat 2005/06 Hardwood Classics Player Jersey - Red - For ages 11-14", "price": 45, "column": 2, "coming_soon": True},
-    {"name": "Cleveland Cavaliers LeBron James Navy Hardwood Classics Swingman Jersey - For ages 11-14", "price": 45, "column": 2, "coming_soon": True},
-    {"name": "Cleveland Cavaliers Lebron James 2015-16 Hardwood Classics Swingman Player Navy Alternate Jersey - For ages 11-14", "price": 45, "column": 2, "coming_soon": True},
+    {"name": "Men's Chicago Bulls Michael Jordan White 1997/98 Jersey - For ages 11-14", "price": 45, "column": 1,
+     "coming_soon": False},
+    {"name": "MICHAEL JORDAN Chicago Bulls 1997-98 Jersey - For ages 11-14", "price": 45, "column": 1,
+     "coming_soon": False},
 
-    {"name": "Los Angeles Lakers Kareem Abdul-Jabbar Road Swingman Jersey - Light Gold - For ages 11-14", "price": 45, "column": 3, "coming_soon": True},
-    {"name": "Los Angeles Lakers Magic Johnson Swingman Jersey - For ages 11-14", "price": 45, "column": 3, "coming_soon": True},
-    {"name": "Los Angeles Lakers Magic Johnson Swingman Jersey (Alt) - For ages 11-14", "price": 45, "column": 3, "coming_soon": True},
+    {"name": "Dwyane Wade Miami Heat 2005/06 Hardwood Classics Player Jersey - Red - For ages 11-14", "price": 45,
+     "column": 2, "coming_soon": True},
+    {"name": "Cleveland Cavaliers LeBron James Navy Hardwood Classics Swingman Jersey - For ages 11-14", "price": 45,
+     "column": 2, "coming_soon": True},
+    {
+        "name": "Cleveland Cavaliers Lebron James 2015-16 Hardwood Classics Swingman Player Navy Alternate Jersey - For ages 11-14",
+        "price": 45, "column": 2, "coming_soon": True},
+
+    {"name": "Los Angeles Lakers Kareem Abdul-Jabbar Road Swingman Jersey - Light Gold - For ages 11-14", "price": 45,
+     "column": 3, "coming_soon": True},
+    {"name": "Los Angeles Lakers Magic Johnson Swingman Jersey - For ages 11-14", "price": 45, "column": 3,
+     "coming_soon": True},
+    {"name": "Los Angeles Lakers Magic Johnson Swingman Jersey (Alt) - For ages 11-14", "price": 45, "column": 3,
+     "coming_soon": True},
 ]
 
 # ============================================================
@@ -211,12 +234,10 @@ if st.session_state.page == "home":
         unsafe_allow_html=True,
     )
 
-    # 3 columns: left space, cart button, why us button
-    # PERFECTLY ALIGNED BUTTON ROW
     col_left, col_cart, col_why = st.columns([7, 1, 1])
 
     with col_cart:
-        total_items = sum(st.session_state.cart.values())
+        total_items = sum(item["qty"] for item in st.session_state.cart.values())
 
         st.markdown(
             f"""
@@ -244,11 +265,13 @@ if st.session_state.page == "home":
 
     search_query = st.text_input("", placeholder="Search Here", label_visibility="collapsed")
 
+
     def filter_products(query):
         if not query:
             return products
         q = query.strip().lower()
         return [p for p in products if q in p["name"].lower()]
+
 
     filtered_products = filter_products(search_query)
 
@@ -259,6 +282,9 @@ if st.session_state.page == "home":
         col = columns_map[p["column"]]
         with col:
             st.markdown('<div class="product-box">', unsafe_allow_html=True)
+
+            if "image" in p:
+                st.image(p["image"], width=800)
 
             st.markdown(f"**{p['name']}**")
             st.markdown(f'<span class="price-tag">$ {p["price"]}.00</span>', unsafe_allow_html=True)
@@ -278,15 +304,23 @@ if st.session_state.page == "home":
 
                 with cols_btn[0]:
                     if st.button("Add", key=add_key):
-                        st.session_state.cart[p["name"]] = st.session_state.cart.get(p["name"], 0) + 1
+                        if p["name"] not in st.session_state.cart:
+                            st.session_state.cart[p["name"]] = {
+                                "qty": 1,
+                                "price": p["price"],
+                                "image": p.get("image", None)
+                            }
+                        else:
+                            st.session_state.cart[p["name"]]["qty"] += 1
+
                         st.session_state[f"added_timestamp_{p['name']}"] = time.time()
                         st.rerun()
 
                 with cols_btn[1]:
                     if st.button("Remove", key=remove_key):
                         if p["name"] in st.session_state.cart:
-                            st.session_state.cart[p["name"]] -= 1
-                            if st.session_state.cart[p["name"]] <= 0:
+                            st.session_state.cart[p["name"]]["qty"] -= 1
+                            if st.session_state.cart[p["name"]]["qty"] <= 0:
                                 del st.session_state.cart[p["name"]]
 
             st.markdown("</div>", unsafe_allow_html=True)
@@ -294,40 +328,11 @@ if st.session_state.page == "home":
 # ============================================================
 # ================= TERMS & CONDITIONS PAGE ==================
 # ============================================================
-
 elif st.session_state.page == "terms":
 
     st.title("Terms & Conditions – The Jersey Forge")
 
-    st.write("""
-    #### 1. Independent, Customized Products
-    All jerseys sold by **The Jersey Forge** are fully modified and customized fan-made products. 
-    They are **not** official merchandise and have **no affiliation** with the NBA, any NBA team, or any official brand.
-
-    ### 2. No Association with Original Brands
-    These jerseys are artistic interpretations and **not replicas** of official products. 
-    Any references to player names, numbers, or teams are purely for descriptive purposes and do not imply endorsement or association.
-
-    ### 3. Custom, Fan-Made Items
-    Each jersey is a **custom, fan-made item** created from independently sourced materials. 
-    Designs, colors, and styles are inspired by basketball culture but are not official team merchandise.
-
-    ### 4. Waiver of Claims
-    By purchasing from **The Jersey Forge**, you agree that you **cannot take legal action** against The Jersey Forge, its owners, or its creators 
-    for any claims related to branding, likeness, or unofficial status of the products.
-
-    ### 5. No Returns or Refunds
-    All sales are **final**. Due to the custom nature of each jersey, we do **not** offer returns, exchanges, or refunds, 
-    except in rare cases of significant manufacturing defects, which are evaluated on a case-by-case basis.
-
-    ### 6. Care and Usage
-    Jerseys should be washed gently and air-dried to preserve print and fabric quality. 
-    The Jersey Forge is not responsible for damage caused by improper care, misuse, or alterations made after purchase.
-
-    ### 7. Acceptance of Terms
-    By continuing to the cart and completing your purchase, you acknowledge that you have **read, understood, and agreed** 
-    to all of the terms and conditions listed above..
-    """)
+    st.write(st.session_state.tc)
 
     if st.button("I Agree — Go to Cart", key="agree_terms"):
         st.session_state.terms_accepted = True
@@ -338,7 +343,6 @@ elif st.session_state.page == "terms":
 # ============================================================
 # ======================== CART PAGE =========================
 # ============================================================
-
 elif st.session_state.page == "cart":
 
     st.markdown("<h2 style='color:white;'>Shopping Cart</h2>", unsafe_allow_html=True)
@@ -355,34 +359,40 @@ elif st.session_state.page == "cart":
 
     subtotal = 0
 
-    for name, qty in st.session_state.cart.items():
+    for name, data in st.session_state.cart.items():
 
-        price = next(p["price"] for p in products if p["name"] == name)
+        qty = data["qty"]
+        price = data["price"]
+        image = data.get("image", None)
+
         item_total = price * qty
         subtotal += item_total
 
         img_col, info_col, price_col = st.columns([1, 4, 1])
 
         with img_col:
-            st.markdown(
-                """
-                <div style="
-                    width:120px;
-                    height:120px;
-                    border:2px solid #ccc;
-                    border-radius:8px;
-                    background-color:#f5f5f5;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    font-size:12px;
-                    color:#777;
-                ">
-                    Image Here
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            if image:
+                st.image(image, width=120)
+            else:
+                st.markdown(
+                    """
+                    <div style="
+                        width:120px;
+                        height:120px;
+                        border:2px solid #ccc;
+                        border-radius:8px;
+                        background-color:#f5f5f5;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:12px;
+                        color:#777;
+                    ">
+                        No Image
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         with info_col:
             st.markdown(f"**{name}**")
@@ -399,7 +409,7 @@ elif st.session_state.page == "cart":
             )
 
             if new_qty != qty:
-                st.session_state.cart[name] = new_qty
+                st.session_state.cart[name]["qty"] = new_qty
 
             if st.button("Delete", key=f"del_{name}"):
                 del st.session_state.cart[name]
@@ -419,15 +429,12 @@ elif st.session_state.page == "cart":
 
     # ---------------- SUBMIT ORDER FLOW ----------------
 
-    # Initialize stage
     if "email_stage" not in st.session_state:
         st.session_state.email_stage = "idle"
 
-    # CLICK SUBMIT ORDER → ask for email
     if st.button("Submit Order", key="submit_order") and st.session_state.email_stage == "idle":
         st.session_state.email_stage = "ask_email"
 
-    # STAGE 1 — Ask for customer email
     if st.session_state.email_stage == "ask_email":
         customer_email = st.text_input("Enter your email to receive your order confirmation:")
 
@@ -438,22 +445,18 @@ elif st.session_state.page == "cart":
                 st.session_state.customer_email = customer_email
                 st.session_state.email_stage = "loading"
 
-    # STAGE 2 — 5 second loading screen
     if st.session_state.email_stage == "loading":
         loading_box = st.empty()
         loading_box.info("Processing your order... Please wait.")
         time.sleep(5)
         loading_box.empty()
 
-        # Generate order number
         import random
 
         st.session_state.order_number = random.randint(100000, 999999)
 
-        # Move to final stage
         st.session_state.email_stage = "final"
 
-    # STAGE 3 — Show order number + send email
     if st.session_state.email_stage == "final":
         st.success(f"Order submitted! Your order number is {st.session_state.order_number}")
 
@@ -471,7 +474,6 @@ elif st.session_state.page == "cart":
 # ============================================================
 # ======================== WHY US PAGE ========================
 # ============================================================
-
 elif st.session_state.page == "whyus":
 
     st.markdown("<h2 style='color:white;'>Why Us</h2>", unsafe_allow_html=True)
@@ -481,7 +483,8 @@ elif st.session_state.page == "whyus":
     """)
 
     st.write("""
-    Every jersey we make carries that mission. The work ethic behind each one comes from the promise I made to myself years ago — to build something better than what I had access to. We put care into every stitch, every design, and every order because this isn’t just a business; it’s a passion born from experience. Jerseys for cheap shouldn’t make your wallet weep, and here, they never will. This is quality made with purpose, for fans who deserve the best without breaking the bank.
+    Every jersey we make carries that mission. The work ethic behind each one comes from the promise I made to myself years ago —
+from the promise I made to myself years ago — to build something better than what I had access to. We put care into every stitch, every design, and every order because this isn’t just a business; it’s a passion born from experience. Jerseys for cheap shouldn’t make your wallet weep, and here, they never will. This is quality made with purpose, for fans who deserve the best without breaking the bank.
     """)
 
     if st.button("⬅ Back to Store", key="back_from_whyus"):
