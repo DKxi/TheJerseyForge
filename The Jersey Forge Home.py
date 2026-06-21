@@ -1,8 +1,76 @@
 import streamlit as st
 import time
 import random
+import sqlite3
 import smtplib
 from email.mime.text import MIMEText
+
+DB_PATH = "jersey_forge.db"
+
+
+# ---------------- DATABASE SETUP ----------------
+def get_connection():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+
+def init_db(seed_products):
+    """Create the products table and seed it from the hardcoded list,
+    but only if the table is empty (so it won't overwrite your edits)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            name TEXT PRIMARY KEY,
+            price REAL NOT NULL,
+            column_num INTEGER NOT NULL,
+            image TEXT,
+            in_stock INTEGER NOT NULL DEFAULT 1
+        )
+    """)
+    conn.commit()
+
+    cur.execute("SELECT COUNT(*) FROM products")
+    count = cur.fetchone()[0]
+
+    if count == 0:
+        for p in seed_products:
+            cur.execute(
+                """INSERT INTO products (name, price, column_num, image, in_stock)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (
+                    p["name"],
+                    p["price"],
+                    p["column"],
+                    p.get("image"),
+                    0 if p.get("coming_soon") else 1,
+                ),
+            )
+        conn.commit()
+
+    conn.close()
+
+
+def load_products_from_db():
+    """Read all products from SQLite and return them in the same
+    shape the rest of the app expects (list of dicts)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT name, price, column_num, image, in_stock FROM products")
+    rows = cur.fetchall()
+    conn.close()
+
+    result = []
+    for name, price, column_num, image, in_stock in rows:
+        item = {
+            "name": name,
+            "price": price,
+            "column": column_num,
+            "coming_soon": (in_stock == 0),
+        }
+        if image:
+            item["image"] = image
+        result.append(item)
+    return result
 
 
 # ---------------- EMAIL FUNCTION ----------------
@@ -202,7 +270,11 @@ button[kind="secondary"]:hover {
 """, unsafe_allow_html=True)
 
 # ---------------- PRODUCT DATA ----------------
-products = [
+# This list is only used to SEED the database the very first time the app runs.
+# After that, stock status (in_stock) is read from jersey_forge.db, and editing
+# it there is how you mark things in/out of stock — this list is no longer read
+# for stock status on later runs.
+seed_products = [
     {
         "name": "Michael Jordan 1996-97 Chicago Bulls Hardwood Swingman Jersey - For ages 11-14",
         "price": 45,
@@ -231,6 +303,10 @@ products = [
     {"name": "Los Angeles Lakers Magic Johnson Swingman Jersey (Alt) - For ages 11-14", "price": 45, "column": 3,
      "coming_soon": True},
 ]
+
+# Create the DB + table on first run, then always read live data from SQLite.
+init_db(seed_products)
+products = load_products_from_db()
 
 # ============================================================
 # ======================= HOME PAGE ==========================
