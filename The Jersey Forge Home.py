@@ -21,7 +21,7 @@ def init_db(seed_products):
     cur.execute("""
         CREATE TABLE IF NOT EXISTS products (
             name TEXT PRIMARY KEY,
-            price REAL NOT NULL,
+            price INTEGER NOT NULL,
             column_num INTEGER NOT NULL,
             image TEXT,
             in_stock INTEGER NOT NULL DEFAULT 1
